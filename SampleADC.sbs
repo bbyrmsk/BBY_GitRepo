@@ -1,0 +1,47 @@
+## SCL Builder Setup File: Do not edit!!
+
+## VERSION: MPLAB X
+## FORMAT:  v2.00.01
+## DEVICE:  PIC18F1220
+
+## PINREGACTIONS
+cyc
+No Repeat
+--
+&
+## ADVPINREGACTIONS
+--
+&
+--
+COND1
+Any
+
+
+
+0
+cyc
+
+--
+&
+## CLOCK
+&
+## STIMULUSFILE
+ADC_data
+ADRESL
+Demand
+0
+1
+ADC_ADRESL.txt
+Hex
+Yes
+
+--
+&
+## RESPONSEFILE
+&
+## ASYNCH
+&
+## ADVANCEDSCL
+
+1
+&

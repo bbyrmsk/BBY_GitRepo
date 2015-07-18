@@ -12,21 +12,21 @@
 ;====================================================================
 
 #include p18f1220.inc                ; Include register definition file
-       LIST
+LIST
 ;==========================================================================
 ;  MPASM PIC18F1220 processor include
 ; 
 ;  (c) Copyright 1999-2012 Microchip Technology, All rights reserved
 ;==========================================================================
 
-       LIST
-       CONFIG OSC = INTIO2
-       CONFIG WDT = OFF
-;       CONFIG WDTPS = 4096
-       CONFIG MCLRE = ON       ; NO Access RA5
-       CONFIG DEBUG = ON       ; NO Access RB6/RB7
-       CONFIG LVP = OFF
-              
+	LIST
+	CONFIG OSC = INTIO2
+	CONFIG WDT = OFF
+;	CONFIG WDTPS = 4096
+	CONFIG MCLRE = ON       ; NO Access RA5
+	CONFIG DEBUG = ON       ; NO Access RB6/RB7
+	CONFIG LVP = OFF
+
 ;====================================================================
 ; VARIABLES
 ;====================================================================   
@@ -47,201 +47,220 @@ retval  res 1 ; equ 0x08
 ; RESET and INTERRUPT VECTORS
 ;====================================================================
 
-     ; Reset Vector
+; Reset Vector
 RST   code  0x0 
-     goto  Start
+	goto  Start
 
 ;====================================================================
 ; CODE SEGMENT
 ;====================================================================
 
 PGM   code
-;Start
-     ; Write your code here
-;Loop  
-     ;goto  Loop
+	;Start
+	; Write your code here
+	;Loop  
+	;goto  Loop
 
 ;====================================================================
 ; MAIN LOOP
 ;====================================================================
 
 Start
-       movlw   b'11111111'
-       movwf   OSCTUNE,W       
-       bsf     OSCCON, 6
-       bsf 	OSCCON, 5
-       bsf 	OSCCON, 4
+	movlw   b'11111111'
+	movwf   OSCTUNE,W       
+	bsf     OSCCON, 6
+	bsf 	OSCCON, 5
+	bsf 	OSCCON, 4
 Begin
-       movlw   d'1'            ; Used to determine the correct Port to select from
-       movwf   chanel_select
-       call    ADC_Config      ; Configure the ADC to read from ADC Port
-       call    ADC_Start_Conversion    ; Call the routine to start the conversion
+	movlw   d'1'            ; Used to determine the correct Port to select from
+	movwf   chanel_select
+	call    ADC_Config      ; Configure the ADC to read from ADC Port
+	call    ADC_Start_Conversion    ; Call the routine to start the conversion
 
 CHECKSTAT       
-       btfsc   ADCON0,GO
-       goto 	CHECKSTAT
-       
-       call 	ADC_Get_Value
-       call 	ADC_Split_8
-       call 	DIG_PortB_Config
-       call 	DIG_PortB_OUT
-       goto 	Begin
-       
+	btfsc   ADCON0,GO
+	goto 	CHECKSTAT
+
+	call 	ADC_Get_Value
+	call 	ADC_Split_8
+	call 	DIG_PortB_Config
+	call 	DIG_PortB_OUT
+	goto 	Begin
+
 ;====================================================================
 ; CODE SEGMENT
 ;====================================================================
 
-
+;====================================================================
+; Digital Port B Define Output Bits
+;====================================================================
 DIG_PortB_OUT
-       movlw   b'00000000'
-       movwf   outv,0
-       movlw   b'10000000'
-       movwf   chanel_select_shift,0
-
-       movff   retval,uCounter
+	movlw   b'00000000'
+	movwf   outv,0
+	movlw   b'10000000'
+	movwf   chanel_select_shift,0
+	movff   retval,uCounter
 while_2
-       tstfsz  uCounter ; while_2
-       goto 	while_2_notzero
-       goto 	while_2_zero
+	tstfsz  uCounter ; while_2
+	goto 	while_2_notzero
+	goto 	while_2_zero
 while_2_notzero
-       movf    chanel_select_shift,0
-       rlcf    chanel_select_shift,0
-       btfss   STATUS,C ; if_3
-       goto 	if_3_false
-       goto 	if_3_true
+	movf    chanel_select_shift,0
+	rlcf    chanel_select_shift,0
+	btfss   STATUS,C ; if_3
+	goto 	if_3_false
+	goto 	if_3_true
 if_3_true
-       addlw   0x01
-       goto 	if_3_end
+	addlw   0x01
+	goto 	if_3_end
 if_3_false
-       addlw   0x00
+	addlw   0x00
 if_3_end
-       movwf   chanel_select_shift,0
-       iorwf   outv
-       decf    uCounter,0
-       movwf   uCounter
-       goto 	while_2
+	movwf   chanel_select_shift,0
+	iorwf   outv
+	decf    uCounter,0
+	movwf   uCounter
+	goto 	while_2
 while_2_zero
-       movff   outv, PORTB
-        
-       return
+	movff   outv, PORTB
+	return
 
+;====================================================================
+; Configure PortB as Digital Output
+;====================================================================
 DIG_PortB_Config
-       clrf    PORTB,0
-      ; movlw   b'00000000'
-      ; movwf   ADCON1,0
-       movlw   0x00
-       movwf   TRISB,0
-       
-       return
-       
+	clrf    PORTB,0
+	movlw   0x00
+	movwf   TRISB,0
+	return
+
+;====================================================================
+; Configure the ADCON0 SFR
+;====================================================================
 ADC_Config_ADCON0	; must pass chanel_select register
-       movff   chanel_select,chanel_select_shift
-       rlncf   chanel_select_shift,1
-       rlncf   chanel_select_shift,1
-       movff   chanel_select_shift,ADCON0
-       bcf     ADCON0, VCFG1
-       bcf     ADCON0, VCFG0
-       bsf     ADCON0, ADON
+	movff   chanel_select,chanel_select_shift
+	rlncf   chanel_select_shift,1
+	rlncf   chanel_select_shift,1
+	movff   chanel_select_shift,ADCON0
+	bcf     ADCON0, VCFG1
+	bcf     ADCON0, VCFG0
+	bsf     ADCON0, ADON
 	return
 
+;====================================================================
+; Configure the ADCON0 SFR
+;====================================================================
 ADC_Config_ADCON1	; must pass chanel_select register
-	 movff   chanel_select,chanel_select_shift
-       movlw   b'10000000'
-       movwf   retval,0
-       
+	movff   chanel_select,chanel_select_shift
+	movlw   b'10000000'
+	movwf   retval,0
 while_1
-       tstfsz  chanel_select_shift ; test is flag is zero_1 skip next step if  zero
-       goto    while_1_notzero
-       goto    while_1_zero
+	tstfsz  chanel_select_shift ; test is flag is zero_1 skip next step if  zero
+	goto    while_1_notzero
+	goto    while_1_zero
 while_1_notzero
-       rlcf    W,0
-       btfss   STATUS,C
-       addlw   0x00
-       addlw   0x01
-       movwf   retval,0
-       decf    chanel_select_shift,1
-       goto 	while_1
+	rlcf    W,0
+	btfss   STATUS,C
+	addlw   0x00
+	addlw   0x01
+	movwf   retval,0
+	decf    chanel_select_shift,1
+	goto 	while_1
 while_1_zero
-       rlcf    W,0
-       btfss   STATUS,C
-       addlw   0x00
-       addlw   0x01
-       movwf   retval,0
-
-       ; Continue Process
-
-       ;movlw  b'11111110'
-       movff   retval, ADCON1     
+	rlcf    W,0
+	btfss   STATUS,C
+	addlw   0x00
+	addlw   0x01
+	movwf   retval,0
+	movff   retval, ADCON1     
 	return
-	
+
+;====================================================================
+; Configure the ADCON0 SFR
+;====================================================================
 ADC_Config_ADCON2	; must pass chanel_select register
-       bsf             ADCON2, ADFM
-       bcf             ADCON2, ACQT2
-       bcf             ADCON2, ACQT1
-       bcf             ADCON2, ACQT0
-       bcf             ADCON2, ADCS2
-       bcf             ADCON2, ADCS1
-       bcf             ADCON2, ADCS0
+	bsf             ADCON2, ADFM
+	bcf             ADCON2, ACQT2
+	bcf             ADCON2, ACQT1
+	bcf             ADCON2, ACQT0
+	bcf             ADCON2, ADCS2
+	bcf             ADCON2, ADCS1
+	bcf             ADCON2, ADCS0
 	return
-	
+
+;====================================================================
+; Configure the ADCON0 SFR
+;====================================================================
 ADC_Config      
-       clrf   	PORTA       ; Ensure PORTA is zero before we enable
-                          ;  the port for the ADC input
-       call ADC_Config_ADCON0
-       call ADC_Config_ADCON1
-       call ADC_Config_ADCON2
-       return 
+	clrf   	PORTA       ; Ensure PORTA is zero before we enable
+	;  the port for the ADC input
+	call ADC_Config_ADCON0
+	call ADC_Config_ADCON1
+	call ADC_Config_ADCON2
+	return 
 
+;====================================================================
+; Initiate the ADC Conversion Process
+;====================================================================
 ADC_Start_Conversion
-       bsf             ADCON0,GO
-       return
+	bsf             ADCON0,GO
+	return
 
+;====================================================================
+; Check the ADC Conversion Status
+;====================================================================
 ADC_Check_Conversion
-       return
-       
+	return
+
+;====================================================================
+; Move the result values to local variables
+;====================================================================
 ADC_Get_Value
-       movff   ADRESL,lResult
-       movff   ADRESH,hResult
-       clrwdt
-       return
-       
+	movff   ADRESL,lResult
+	movff   ADRESH,hResult
+	clrwdt
+	return
+
+;====================================================================
+; Read the High three bits of Output
+;====================================================================  
 ADC_Split_8 
-       ; read justification
-       ; if left justified adfm = 0
-       ; if right jsutified adfm = 1
-       btfsc   ADCON2, ADFM    ; if_2 = 0 true, else false
-		goto    if_2_true; ADC_left_just
-       goto    if_2_false;ADC_right_just
+	; read justification
+	; if left justified adfm = 0
+	; if right jsutified adfm = 1
+	btfsc   ADCON2, ADFM    ; if_2 = 0 true, else false
+	goto    if_2_true; ADC_left_just
+	goto    if_2_false;ADC_right_just
 if_2_true;      ADC_right_just
-       ;       mask b'0000 0011' & hResult -> mValH
-       movff   hResult, valH
-       movf    valH,0  ; move uResult to W
-       andlw   0x03    ; OR W(hResult) with the mask
-       movwf   valH
-       rlncf   valH,0          ; Rotate Left W(hResult)
-       movwf   retval,0
-       
-       ;       mask b'1000 0000' & lResult -> mvalL
-       movff   lResult, valL
-       movf    valL,0  ; move lResult to W
-       andlw   0x80    ; OR W(lResult) with the mask
-       movwf   valL
-       rlcf    valL            ; Rotate Left W(lResult)
-       movf    valL,0
-       btfss   STATUS,C
-       addlw   0x00
-       addlw   0x01
-       
-       iorwf   retval; or the high bit and low bit, put into retval
-       goto 	if_2_end
+	;       mask b'0000 0011' & hResult -> mValH
+	movff   hResult, valH
+	movf    valH,0  ; move uResult to W
+	andlw   0x03    ; OR W(hResult) with the mask
+	movwf   valH
+	rlncf   valH,0          ; Rotate Left W(hResult)
+	movwf   retval,0
+
+	;       mask b'1000 0000' & lResult -> mvalL
+	movff   lResult, valL
+	movf    valL,0  ; move lResult to W
+	andlw   0x80    ; OR W(lResult) with the mask
+	movwf   valL
+	rlcf    valL            ; Rotate Left W(lResult)
+	movf    valL,0
+	btfss   STATUS,C
+	addlw   0x00
+	addlw   0x01
+
+	iorwf   retval; or the high bit and low bit, put into retval
+	goto 	if_2_end
 if_2_false  ;ADC_left_just
-       ;mask b'1110 0000'&ValH
-       movf    hResult,W,0     ; move uResult to W
-       andlw   b'11100000'     ; OR W(uResult) with the mask
-       rlcf    W,0                     ; Rotate Left W(uResult) b'11000001'
-       rlcf    W,0                     ; Rotate Left W(uResult) b'10000011'
-       rlcf    W,0                     ; Rotate Left W(uResult) b'00000111'
-       movwf   retval,0                ; Return the retval
+	;mask b'1110 0000'&ValH
+	movf    hResult,W,0     ; move uResult to W
+	andlw   b'11100000'     ; OR W(uResult) with the mask
+	rlcf    W,0                     ; Rotate Left W(uResult) b'11000001'
+	rlcf    W,0                     ; Rotate Left W(uResult) b'10000011'
+	rlcf    W,0                     ; Rotate Left W(uResult) b'00000111'
+	movwf   retval,0                ; Return the retval
 if_2_end
-       return
+	return
 	END
